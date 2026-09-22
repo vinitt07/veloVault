@@ -1,0 +1,1240 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="CarFinEco" />
+<meta name="theme-color" content="#0A0C10" />
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%2312161D'/%3E%3Ctext x='50' y='64' font-size='52' text-anchor='middle' font-family='Arial'%3E%F0%9F%9A%97%3C/text%3E%3C/svg%3E">
+<title>Car Financial Ecosystem — Prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-app:#0A0C10;
+    --panel-dark:#12161D;
+    --panel-surface:#1B212B;
+    --panel-surface-2:#222A35;
+    --line:#2B333F;
+    --teal:#00C2B0;
+    --teal-dim:#0A3B37;
+    --amber:#F5A623;
+    --amber-dim:#3A2C10;
+    --red:#E5484D;
+    --red-dim:#3A1516;
+    --blue:#4C8DFF;
+    --blue-dim:#132038;
+    --text-primary:#F4F6F8;
+    --text-muted:#8B95A1;
+    --text-faint:#5C6673;
+    --font-display:'Space Grotesk', sans-serif;
+    --font-body:'Inter', sans-serif;
+    --font-mono:'JetBrains Mono', monospace;
+    --grad1:#10202080;
+    --grad2:#10182e80;
+    --shadow-strong:#000c;
+  }
+  :root[data-theme="light"]{
+    --bg-app:#EEF1F4;
+    --panel-dark:#FFFFFF;
+    --panel-surface:#FFFFFF;
+    --panel-surface-2:#F1F4F7;
+    --line:#DDE3E9;
+    --teal-dim:#DDF6F1;
+    --amber-dim:#FDEBD0;
+    --red-dim:#FBE1E2;
+    --blue-dim:#E5EDFF;
+    --text-primary:#12161D;
+    --text-muted:#5B6673;
+    --text-faint:#8A94A1;
+    --grad1:#00c2b022;
+    --grad2:#4c8dff1c;
+    --shadow-strong:#00000022;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(1200px 600px at 20% -10%, var(--grad1) 0%, transparent 60%),
+      radial-gradient(1000px 500px at 90% 10%, var(--grad2) 0%, transparent 55%),
+      var(--bg-app);
+    color:var(--text-primary);
+    font-family:var(--font-body);
+    min-height:100vh;
+    padding:28px 16px 60px;
+    transition:background .25s ease, color .25s ease;
+  }
+  .wrap{max-width:1180px;margin:0 auto;}
+
+  /* The in-car cluster stays dark regardless of the app theme toggle — real
+     automotive displays keep a dark chrome for glare/legibility, and it also
+     keeps the instrument-style text (which relies on light-on-dark gradients)
+     readable no matter what theme the rest of the app is in. */
+  .car-frame{
+    --panel-dark:#12161D;
+    --panel-surface:#1B212B;
+    --panel-surface-2:#222A35;
+    --line:#2B333F;
+    --text-primary:#F4F6F8;
+    --text-muted:#8B95A1;
+    --text-faint:#5C6673;
+    --teal-dim:#0A3B37;
+    --amber-dim:#3A2C10;
+    --red-dim:#3A1516;
+    --blue-dim:#132038;
+  }
+
+  /* ---------- Top masthead ---------- */
+  .masthead{display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:18px;margin-bottom:26px;padding-bottom:18px;border-bottom:1px solid var(--line);}
+  .masthead h1{font-family:var(--font-display);font-size:22px;font-weight:700;margin:0 0 4px;letter-spacing:0.2px;}
+  .masthead p{margin:0;color:var(--text-muted);font-size:13px;}
+  .brand-tag{display:flex;align-items:center;gap:10px;}
+  .brand-dot{width:10px;height:10px;border-radius:3px;background:var(--teal);box-shadow:0 0 14px 2px #00c2b088;}
+
+  .device-switch{display:flex;gap:6px;background:var(--panel-surface);border:1px solid var(--line);border-radius:12px;padding:5px;}
+  .device-switch button{
+    font-family:var(--font-body);font-weight:600;font-size:12.5px;letter-spacing:0.2px;
+    color:var(--text-muted);background:transparent;border:none;padding:9px 15px;border-radius:9px;cursor:pointer;
+    transition:all .18s ease;
+  }
+  .device-switch button.active{background:var(--panel-surface-2);color:var(--text-primary);box-shadow:inset 0 0 0 1px var(--line);}
+  .device-switch button:hover:not(.active){color:var(--text-primary);}
+
+  .sync-status{
+    display:flex;align-items:center;gap:7px;font-size:11.5px;color:var(--text-muted);font-weight:600;
+    background:var(--panel-surface);border:1px solid var(--line);border-radius:999px;padding:7px 13px;
+  }
+  .sync-dot{width:7px;height:7px;border-radius:50%;background:var(--text-faint);flex-shrink:0;transition:background .2s ease;}
+  .sync-dot.saved{background:var(--teal);box-shadow:0 0 8px #00c2b0aa;}
+  .sync-dot.saving{background:var(--amber);animation:pulse 1s ease-in-out infinite;}
+  .sync-dot.error{background:var(--red);}
+
+  .theme-toggle{
+    display:flex;align-items:center;gap:8px;background:var(--panel-surface);border:1px solid var(--line);
+    border-radius:999px;padding:6px 6px 6px 12px;cursor:pointer;user-select:none;
+  }
+  .theme-toggle .tt-label{font-size:11.5px;font-weight:600;color:var(--text-muted);}
+  .tt-track{width:40px;height:23px;border-radius:999px;background:var(--panel-surface-2);position:relative;border:1px solid var(--line);flex-shrink:0;transition:background .2s ease;}
+  :root[data-theme="light"] .tt-track{background:#DDF6F1;}
+  .tt-thumb{
+    position:absolute;top:2px;left:2px;width:17px;height:17px;border-radius:50%;
+    background:linear-gradient(135deg,#F5A623,#F7C873);
+    display:flex;align-items:center;justify-content:center;font-size:10px;
+    transition:transform .22s cubic-bezier(.4,0,.2,1), background .22s ease;
+  }
+  :root[data-theme="light"] .tt-thumb{transform:translateX(17px);background:linear-gradient(135deg,#00E0C6,#00A99A);}
+
+  .view{display:none;}
+  .view.active{display:block;animation:fadein .25s ease;}
+  @keyframes fadein{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+
+  /* ============ IN-CAR VIEW ============ */
+  .car-scene{display:flex;flex-direction:column;align-items:center;gap:18px;}
+  .car-frame{
+    width:100%;max-width:920px;aspect-ratio:16/8.2;
+    background:linear-gradient(160deg,#1a1f27,#0d1015 70%);
+    border-radius:26px;padding:16px;
+    box-shadow:0 0 0 1px #2a323e, 0 30px 70px -20px #000c, 0 0 90px -30px #00c2b055;
+    position:relative;
+  }
+  .car-screen{
+    width:100%;height:100%;border-radius:16px;overflow:hidden;position:relative;
+    background:radial-gradient(1000px 400px at 15% 0%, #16303080 0%, transparent 55%), var(--panel-dark);
+    box-shadow:inset 0 0 0 1px #262e39;
+    display:flex;flex-direction:column;
+  }
+  .car-topbar{display:flex;align-items:center;justify-content:space-between;padding:16px 22px 0;}
+  .veh-id{display:flex;align-items:baseline;gap:10px;}
+  .veh-id .icon{font-size:18px;}
+  .veh-id .name{font-family:var(--font-display);font-weight:600;font-size:16px;}
+  .veh-id .plate{font-family:var(--font-mono);font-size:12px;color:var(--text-muted);letter-spacing:1px;background:#0000004d;padding:3px 8px;border-radius:6px;border:1px solid var(--line);}
+  .car-clock{font-family:var(--font-mono);color:var(--text-faint);font-size:12px;}
+
+  .score-badge{
+    display:flex;align-items:center;gap:7px;cursor:pointer;background:var(--panel-surface);
+    border:1px solid var(--line);border-radius:999px;padding:5px 12px 5px 6px;transition:all .16s ease;
+  }
+  .score-badge:hover{border-color:#00c2b077;}
+  .score-badge .ring{
+    width:26px;height:26px;border-radius:50%;
+    background:conic-gradient(#00E0C6 0% var(--pct,92%), #232a35 var(--pct,92%) 100%);
+    display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  }
+  .score-badge .ring::after{content:'';width:19px;height:19px;border-radius:50%;background:var(--panel-surface);}
+  .score-badge .num{font-family:var(--font-mono);font-weight:700;font-size:12px;color:#7ff5e6;}
+  .score-badge .lbl{font-size:10px;color:var(--text-faint);line-height:1.2;}
+
+  /* --- Passport (mobile) --- */
+  .passport-hero{text-align:center;padding:14px 10px 18px;}
+  .passport-ring{
+    width:130px;height:130px;border-radius:50%;margin:0 auto 10px;
+    background:conic-gradient(#00E0C6 0% 92%, #232a35 92% 100%);
+    display:flex;align-items:center;justify-content:center;position:relative;
+  }
+  .passport-ring::before{content:'';position:absolute;width:106px;height:106px;border-radius:50%;background:var(--panel-dark);box-shadow:inset 0 0 0 1px var(--line);}
+  .passport-ring .inner{position:relative;text-align:center;}
+  .passport-ring .inner .n{font-family:var(--font-mono);font-weight:700;font-size:30px;color:var(--text-primary);}
+  .passport-ring .inner .s{font-size:9.5px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.5px;margin-top:-2px;}
+  .passport-tag{display:inline-block;font-size:11px;font-weight:700;color:var(--teal);background:var(--teal-dim);padding:5px 12px;border-radius:999px;margin-top:4px;}
+
+  .score-breakdown-row{display:flex;align-items:center;gap:10px;padding:8px 0;}
+  .score-breakdown-row .lbl{width:120px;font-size:11.5px;color:var(--text-muted);flex-shrink:0;}
+  .score-breakdown-row .track{flex:1;height:7px;background:var(--panel-surface-2);border-radius:4px;overflow:hidden;}
+  .score-breakdown-row .fill{height:100%;background:linear-gradient(90deg,#00A99A,#00E0C6);border-radius:4px;}
+  .score-breakdown-row .pct{font-family:var(--font-mono);font-size:11px;color:var(--text-faint);width:34px;text-align:right;flex-shrink:0;}
+
+  .timeline-item{display:flex;gap:11px;padding:10px 2px;border-bottom:1px solid var(--line);}
+  .timeline-item:last-child{border-bottom:none;}
+  .timeline-check{width:22px;height:22px;border-radius:50%;background:var(--teal-dim);color:var(--teal);display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;margin-top:1px;}
+  .timeline-item.unverified .timeline-check{background:var(--panel-surface-2);color:var(--text-faint);}
+  .timeline-item .t1{font-size:12.5px;font-weight:600;}
+  .timeline-item .t2{font-size:10.5px;color:var(--text-faint);margin-top:1px;}
+  .verified-tag{font-size:9px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:.4px;}
+  .unverified-tag{font-size:9px;font-weight:700;color:var(--text-faint);text-transform:uppercase;letter-spacing:.4px;}
+
+  .share-btn{
+    width:100%;padding:13px;border-radius:12px;border:1px solid #00c2b055;background:var(--teal-dim);
+    color:var(--teal);font-weight:700;font-size:13px;cursor:pointer;margin-top:6px;font-family:var(--font-body);
+  }
+  .share-btn:hover{background:#0d4741;}
+
+  .metrics-row{display:flex;gap:26px;padding:18px 22px 6px;}
+  .metric{flex:1;}
+  .metric .label{font-size:10.5px;letter-spacing:.9px;text-transform:uppercase;color:var(--text-faint);margin-bottom:4px;font-weight:600;}
+  .metric .value{font-family:var(--font-mono);font-weight:600;font-size:23px;letter-spacing:.5px;
+    background:linear-gradient(180deg,#fff,#cfd8e0);-webkit-background-clip:text;background-clip:text;color:transparent;
+    text-shadow:0 0 24px #00c2b02e;}
+  .metric .value.teal{background:linear-gradient(180deg,#7ff5e6,#00C2B0);-webkit-background-clip:text;background-clip:text;}
+
+  .car-body{flex:1;display:flex;align-items:center;justify-content:center;padding:10px 26px 8px;position:relative;}
+
+  /* --- Home: alert card --- */
+  .alert-card{
+    width:100%;max-width:560px;border-radius:18px;padding:20px 22px;position:relative;
+    border:1px solid var(--line);
+    background:linear-gradient(135deg, var(--panel-surface), var(--panel-surface-2));
+    animation:cardin .3s ease;
+  }
+  @keyframes cardin{from{opacity:0;transform:scale(.97);}to{opacity:1;transform:scale(1);}}
+  .alert-card.urgency-high{border-color:#5c2226;box-shadow:0 0 0 1px #5c222680, 0 18px 40px -18px #e5484d33;}
+  .alert-card.urgency-med{border-color:#4a3a17;box-shadow:0 0 0 1px #4a3a1780, 0 18px 40px -18px #f5a62333;}
+  .alert-top{display:flex;align-items:center;gap:9px;margin-bottom:10px;}
+  .pill{font-size:10px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;padding:4px 9px;border-radius:999px;}
+  .pill.high{background:var(--red-dim);color:#ff9195;}
+  .pill.med{background:var(--amber-dim);color:#ffc266;}
+  .alert-cat{font-size:12.5px;color:var(--text-muted);font-weight:600;}
+  .alert-status{font-family:var(--font-display);font-size:19px;font-weight:600;margin:0 0 16px;line-height:1.3;}
+  .more-pill{position:absolute;top:16px;right:18px;font-size:11px;color:var(--text-muted);background:#00000055;border:1px solid var(--line);padding:4px 9px;border-radius:999px;cursor:pointer;}
+  .more-pill:hover{color:var(--text-primary);}
+
+  .btn-primary{
+    width:100%;padding:16px 20px;border-radius:13px;border:none;cursor:pointer;
+    font-family:var(--font-body);font-weight:700;font-size:15px;letter-spacing:.2px;
+    background:linear-gradient(135deg,#00E0C6,#00A99A);color:#022321;
+    box-shadow:0 10px 26px -10px #00c2b06e;
+    transition:transform .12s ease, box-shadow .12s ease;
+  }
+  .btn-primary:hover{transform:translateY(-1px);box-shadow:0 14px 30px -10px #00c2b090;}
+  .btn-primary:active{transform:translateY(0);}
+
+  /* --- Voice bar --- */
+  .voice-bar{display:flex;align-items:center;justify-content:center;gap:10px;padding:12px 22px 18px;color:var(--text-faint);font-size:12px;}
+  .mic-btn{
+    width:34px;height:34px;border-radius:50%;border:1px solid var(--line);background:var(--panel-surface);
+    display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;color:var(--text-muted);
+    transition:all .2s ease;flex-shrink:0;
+  }
+  .mic-btn:hover{color:var(--teal);border-color:#00c2b055;}
+  .mic-btn.listening{background:var(--teal-dim);color:#7ff5e6;border-color:#00c2b0aa;box-shadow:0 0 0 6px #00c2b022;animation:pulse 1.1s ease-in-out infinite;}
+  @keyframes pulse{0%,100%{box-shadow:0 0 0 4px #00c2b022;}50%{box-shadow:0 0 0 10px #00c2b011;}}
+  .voice-hint b{color:var(--text-muted);font-weight:600;}
+  .voice-transcript{font-family:var(--font-mono);font-size:12.5px;color:#7ff5e6;min-height:16px;}
+
+  /* --- Detail screen: partner options --- */
+  .detail-wrap{width:100%;height:100%;display:flex;flex-direction:column;padding:14px 26px 0;}
+  .detail-head{display:flex;align-items:center;gap:12px;margin-bottom:4px;}
+  .back-btn{background:none;border:none;color:var(--text-muted);font-size:13px;cursor:pointer;font-family:var(--font-body);font-weight:600;padding:6px 4px;}
+  .back-btn:hover{color:var(--text-primary);}
+  .detail-title{font-family:var(--font-display);font-weight:600;font-size:16px;}
+  .detail-sub{color:var(--text-muted);font-size:12.5px;margin:4px 0 14px 0;padding-left:2px;}
+  .partner-row{display:flex;gap:14px;flex:1;align-items:stretch;}
+  .partner-card{
+    flex:1;background:var(--panel-surface);border:1px solid var(--line);border-radius:14px;padding:16px;
+    display:flex;flex-direction:column;justify-content:space-between;cursor:pointer;transition:all .16s ease;
+  }
+  .partner-card:hover{border-color:#00c2b077;transform:translateY(-2px);background:var(--panel-surface-2);}
+  .partner-card.featured{border-color:#00c2b055;box-shadow:0 0 0 1px #00c2b033;}
+  .p-name{font-family:var(--font-display);font-weight:600;font-size:14px;margin-bottom:8px;}
+  .p-price{font-family:var(--font-mono);font-size:19px;font-weight:600;color:#eef3f6;}
+  .p-rating{font-size:11.5px;color:var(--amber);margin-top:4px;}
+  .p-select{margin-top:14px;text-align:center;font-size:12px;font-weight:700;color:#022321;background:#00C2B0;padding:9px;border-radius:9px;}
+
+  /* --- Confirmation screen --- */
+  .confirm-wrap{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:10px;}
+  .confirm-check{width:52px;height:52px;border-radius:50%;background:var(--teal-dim);color:#7ff5e6;display:flex;align-items:center;justify-content:center;font-size:24px;margin-bottom:6px;animation:pop .3s ease;}
+  @keyframes pop{0%{transform:scale(.5);opacity:0;}100%{transform:scale(1);opacity:1;}}
+  .confirm-title{font-family:var(--font-display);font-weight:700;font-size:19px;}
+  .confirm-sub{color:var(--text-muted);font-size:13px;max-width:360px;}
+
+  .car-controls{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;}
+  .ctrl-btn{
+    font-family:var(--font-body);font-size:12px;font-weight:600;color:var(--text-muted);
+    background:var(--panel-surface);border:1px solid var(--line);padding:9px 14px;border-radius:10px;cursor:pointer;
+  }
+  .ctrl-btn:hover{color:var(--text-primary);border-color:#3a4553;}
+  .ctrl-btn.on{color:var(--teal);border-color:#00c2b055;background:var(--teal-dim);}
+  .helper-note{color:var(--text-faint);font-size:12px;text-align:center;max-width:560px;}
+
+  /* ============ MOBILE VIEW ============ */
+  .mobile-scene{display:flex;gap:34px;justify-content:center;flex-wrap:wrap;align-items:flex-start;}
+  .phone{
+    width:340px;height:700px;background:#0d1116;border-radius:42px;padding:14px;
+    box-shadow:0 0 0 1px #2a323e, 0 40px 80px -30px #000c;position:relative;flex-shrink:0;
+  }
+  .phone-notch{position:absolute;top:14px;left:50%;transform:translateX(-50%);width:120px;height:22px;background:#0d1116;border-radius:0 0 16px 16px;z-index:5;}
+  .phone-screen{width:100%;height:100%;background:var(--panel-dark);border-radius:30px;overflow:hidden;display:flex;flex-direction:column;position:relative;}
+  .phone-status{display:flex;justify-content:space-between;padding:14px 22px 2px;font-family:var(--font-mono);font-size:11px;color:var(--text-faint);}
+  .phone-content{flex:1;overflow-y:auto;padding:14px 18px 10px;}
+  .phone-content::-webkit-scrollbar{width:0;}
+  .phone-tabbar{display:flex;border-top:1px solid var(--line);padding:10px 8px 16px;gap:4px;}
+  .tab-btn{flex:1;background:none;border:none;color:var(--text-faint);font-size:10.5px;font-weight:600;padding:8px 2px;border-radius:10px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;font-family:var(--font-body);}
+  .tab-btn .ic{font-size:16px;}
+  .tab-btn.active{color:var(--teal);background:var(--teal-dim);}
+
+  .m-h1{font-family:var(--font-display);font-weight:700;font-size:19px;margin:6px 0 2px;}
+  .m-sub{color:var(--text-muted);font-size:12.5px;margin:0 0 16px;}
+  .m-card{background:var(--panel-surface);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:12px;}
+  .m-card-row{display:flex;justify-content:space-between;align-items:center;}
+  .m-vehicle-hero{display:flex;align-items:center;gap:12px;background:linear-gradient(135deg,var(--panel-surface),var(--panel-surface-2));border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:14px;}
+  .m-vehicle-hero .emoji{font-size:30px;}
+  .m-vehicle-hero .name{font-family:var(--font-display);font-weight:600;font-size:14.5px;}
+  .m-vehicle-hero .plate{font-family:var(--font-mono);font-size:11px;color:var(--text-muted);}
+  .m-stat-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px;}
+  .m-stat{background:var(--panel-surface);border:1px solid var(--line);border-radius:12px;padding:10px 8px;text-align:center;}
+  .m-stat .v{font-family:var(--font-mono);font-weight:600;font-size:15px;}
+  .m-stat .l{font-size:9.5px;color:var(--text-faint);margin-top:3px;text-transform:uppercase;letter-spacing:.4px;}
+  .m-section-label{font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--text-faint);font-weight:700;margin:16px 0 8px;}
+  .m-alert-item{display:flex;align-items:center;gap:11px;padding:11px 4px;border-bottom:1px solid var(--line);}
+  .m-alert-item:last-child{border-bottom:none;}
+  .m-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+  .m-dot.high{background:var(--red);box-shadow:0 0 8px #e5484d88;}
+  .m-dot.med{background:var(--amber);box-shadow:0 0 8px #f5a62388;}
+  .m-alert-item .txt{flex:1;}
+  .m-alert-item .t1{font-size:13px;font-weight:600;}
+  .m-alert-item .t2{font-size:11px;color:var(--text-faint);}
+  .m-chev{color:var(--text-faint);font-size:14px;}
+
+  .m-expense-item{display:flex;justify-content:space-between;align-items:center;padding:11px 2px;border-bottom:1px solid var(--line);font-size:13px;}
+  .m-expense-item:last-child{border-bottom:none;}
+  .m-expense-item .cat{display:flex;align-items:center;gap:10px;}
+  .m-expense-item .amt{font-family:var(--font-mono);font-weight:600;}
+  .m-badge{width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;}
+
+  .m-insight-bar-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+  .m-insight-bar-row .lbl{width:64px;font-size:11px;color:var(--text-muted);flex-shrink:0;}
+  .m-insight-bar-track{flex:1;height:9px;background:var(--panel-surface-2);border-radius:5px;overflow:hidden;}
+  .m-insight-bar-fill{height:100%;background:linear-gradient(90deg,#00A99A,#00E0C6);border-radius:5px;}
+  .m-insight-bar-row .amt{font-family:var(--font-mono);font-size:11px;color:var(--text-muted);width:52px;text-align:right;flex-shrink:0;}
+
+  .toggle-row{display:flex;justify-content:space-between;align-items:center;padding:12px 2px;border-bottom:1px solid var(--line);font-size:13px;}
+  .toggle-row:last-child{border-bottom:none;}
+  .switch{width:38px;height:22px;border-radius:99px;background:var(--panel-surface-2);position:relative;cursor:pointer;flex-shrink:0;}
+  .switch.on{background:var(--teal);}
+  .switch::after{content:'';position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:#0d1116;transition:transform .18s ease;}
+  .switch.on::after{transform:translateX(16px);background:#022321;}
+
+  /* ============ PARTNER PORTAL VIEW ============ */
+  .portal-wrap{background:var(--panel-dark);border:1px solid var(--line);border-radius:18px;padding:24px 26px;max-width:920px;margin:0 auto;}
+  .portal-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;flex-wrap:wrap;gap:12px;}
+  .portal-head h2{font-family:var(--font-display);font-size:17px;margin:0 0 4px;}
+  .portal-head p{color:var(--text-muted);font-size:12.5px;margin:0;}
+  .portal-stats{display:flex;gap:10px;}
+  .portal-stat{background:var(--panel-surface);border:1px solid var(--line);border-radius:12px;padding:10px 16px;text-align:center;min-width:88px;}
+  .portal-stat .v{font-family:var(--font-mono);font-weight:700;font-size:17px;}
+  .portal-stat .l{font-size:9.5px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.4px;margin-top:2px;}
+
+  .lead-table{width:100%;border-collapse:collapse;}
+  .lead-table th{text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.5px;color:var(--text-faint);padding:8px 10px;border-bottom:1px solid var(--line);font-weight:700;}
+  .lead-table td{padding:12px 10px;border-bottom:1px solid var(--line);font-size:13px;vertical-align:middle;}
+  .lead-table tr:last-child td{border-bottom:none;}
+  .lead-cat-badge{width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:14px;}
+  .status-pill{font-size:10.5px;font-weight:700;padding:5px 10px;border-radius:999px;letter-spacing:.3px;display:inline-block;}
+  .status-new{background:#132038;color:#8fb4ff;}
+  .status-contacted{background:#3a2c10;color:#ffc266;}
+  .status-quoted{background:#2a1f45;color:#c6a8ff;}
+  .status-converted{background:#0a3b37;color:#7ff5e6;}
+  .status-lost{background:#3a1516;color:#ff9195;}
+  .advance-btn{font-size:11px;font-weight:700;background:var(--panel-surface-2);border:1px solid var(--line);color:var(--text-primary);padding:7px 12px;border-radius:8px;cursor:pointer;}
+  .advance-btn:hover{border-color:#00c2b077;color:var(--teal);}
+  .advance-btn:disabled{opacity:.35;cursor:default;}
+  .advance-btn:disabled:hover{border-color:var(--line);color:var(--text-primary);}
+
+  .footer-note{text-align:center;color:var(--text-faint);font-size:11.5px;margin-top:34px;line-height:1.6;}
+
+  /* ---------- Data entry (forms) ---------- */
+  .form-toggle-btn{
+    width:100%;padding:11px;border-radius:11px;border:1px dashed var(--line);background:transparent;
+    color:var(--text-muted);font-weight:600;font-size:12.5px;cursor:pointer;margin-bottom:12px;font-family:var(--font-body);
+  }
+  .form-toggle-btn:hover{border-color:#00c2b077;color:var(--teal);}
+  .entry-form{background:var(--panel-surface);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:14px;}
+  .form-row{margin-bottom:10px;}
+  .form-row label{display:block;font-size:10.5px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.4px;font-weight:700;margin-bottom:5px;}
+  .form-row select, .form-row input{
+    width:100%;background:var(--panel-surface-2);border:1px solid var(--line);border-radius:9px;
+    padding:9px 10px;color:var(--text-primary);font-family:var(--font-body);font-size:13px;
+  }
+  .form-row select:focus, .form-row input:focus{outline:none;border-color:#00c2b077;}
+  .form-submit{
+    width:100%;padding:11px;border-radius:10px;border:none;background:linear-gradient(135deg,#00E0C6,#00A99A);
+    color:#022321;font-weight:700;font-size:13px;cursor:pointer;margin-top:2px;font-family:var(--font-body);
+  }
+  .odometer-edit-row{display:flex;gap:8px;padding:10px 2px;}
+  .odometer-edit-row input{flex:1;background:var(--panel-surface-2);border:1px solid var(--line);border-radius:9px;padding:8px 10px;color:var(--text-primary);font-family:var(--font-mono);font-size:13px;}
+  .odometer-edit-row button{padding:8px 14px;border-radius:9px;border:none;background:var(--teal-dim);color:var(--teal);font-weight:700;font-size:12px;cursor:pointer;}
+  .reset-btn{width:100%;padding:11px;border-radius:11px;border:1px solid #4a1f22;background:var(--red-dim);color:#ff9195;font-weight:700;font-size:12.5px;cursor:pointer;margin-top:8px;font-family:var(--font-body);}
+  .empty-note{color:var(--text-faint);font-size:12px;text-align:center;padding:16px 4px;}
+
+  /* ============ PHONE-SCREEN RESPONSIVE ============ */
+  @media (max-width: 640px){
+    body{padding:14px 10px 40px;}
+    .masthead{align-items:flex-start;gap:12px;}
+    .masthead h1{font-size:18px;}
+    .masthead p{font-size:11.5px;}
+    .brand-tag{gap:8px;}
+    .masthead > div:last-child{width:100%;display:flex;flex-direction:column;gap:8px;align-items:stretch;}
+    .device-switch{width:100%;}
+    .device-switch button{flex:1;padding:9px 6px;font-size:11px;}
+    .theme-toggle{align-self:flex-end;}
+
+    .car-frame{border-radius:18px;padding:8px;aspect-ratio:auto;height:auto;min-height:420px;}
+    .car-screen{border-radius:12px;}
+    .car-topbar{padding:12px 14px 0;flex-wrap:wrap;gap:8px;}
+    .veh-id .name{font-size:14px;}
+    .veh-id .plate{font-size:10.5px;padding:2px 6px;}
+    .score-badge{padding:4px 10px 4px 5px;}
+    .metrics-row{padding:14px 14px 4px;gap:10px;}
+    .metric .value{font-size:17px;}
+    .metric .label{font-size:9px;}
+    .car-body{padding:10px 14px 6px;min-height:220px;}
+    .alert-card{padding:16px 16px;}
+    .alert-status{font-size:16px;}
+    .btn-primary{padding:14px;font-size:14px;}
+    .partner-row{flex-direction:column;gap:10px;}
+    .partner-card{padding:14px;}
+    .voice-bar{padding:10px 14px 14px;}
+
+    .mobile-scene{flex-direction:column;align-items:center;gap:20px;}
+    .phone{width:100%;max-width:360px;height:640px;}
+    .phone + div{padding-top:4px !important;max-width:100% !important;text-align:left;}
+
+    .portal-wrap{padding:16px;border-radius:14px;}
+    .portal-head{flex-direction:column;}
+    .portal-stats{width:100%;}
+    .portal-stat{flex:1;}
+    .lead-table{font-size:11.5px;}
+    .lead-table th, .lead-table td{padding:8px 6px;}
+    .lead-table th:nth-child(2), .lead-table td:nth-child(2){display:none;} /* hide vehicle column on very small screens */
+  }
+  @media (max-width: 380px){
+    .lead-table th:nth-child(4), .lead-table td:nth-child(4){display:none;} /* hide "received" column too */
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="masthead">
+    <div class="brand-tag">
+      <div class="brand-dot"></div>
+      <div>
+        <h1>Car Financial Ecosystem</h1>
+        <p>Interactive prototype — in-car surface, mobile companion, partner portal</p>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      <div class="sync-status" id="syncStatus" title="Data storage status">
+        <span class="sync-dot" id="syncDot"></span>
+        <span id="syncLabel">Loading…</span>
+      </div>
+      <div class="theme-toggle" onclick="toggleTheme()" title="Toggle light / dark theme">
+        <span class="tt-label" id="themeLabel">Dark</span>
+        <div class="tt-track"><div class="tt-thumb" id="themeThumb">🌙</div></div>
+      </div>
+      <div class="device-switch">
+        <button class="active" data-view="car">🚗 In-Car</button>
+        <button data-view="mobile">📱 Mobile</button>
+        <button data-view="portal">🧾 Partner Portal</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ IN-CAR VIEW ============ -->
+  <div class="view active" id="view-car">
+    <div class="car-scene">
+      <div class="car-frame">
+        <div class="car-screen" id="carScreen">
+          <!-- injected by JS -->
+        </div>
+      </div>
+      <div class="car-controls" id="carControls"></div>
+      <div class="helper-note">Simulating a parked-mode infotainment session. Try the alert cycle to see how card priority changes, or tap the mic to run the voice flow.</div>
+    </div>
+  </div>
+
+  <!-- ============ MOBILE VIEW ============ -->
+  <div class="view" id="view-mobile">
+    <div class="mobile-scene">
+      <div class="phone">
+        <div class="phone-notch"></div>
+        <div class="phone-screen">
+          <div class="phone-status"><span>9:41</span><span>●●●● 5G 100%</span></div>
+          <div class="phone-content" id="phoneContent"></div>
+          <div class="phone-tabbar" id="phoneTabs"></div>
+        </div>
+      </div>
+      <div style="max-width:320px;padding-top:30px;">
+        <p class="m-section-label" style="margin-top:0;">About this surface</p>
+        <p style="color:var(--text-muted);font-size:13px;line-height:1.7;">
+          The mobile app is the setup + deep-detail layer — vehicle documents, full spend history,
+          and the alert list live here. Anything time-sensitive still shows up as a push notification,
+          but the decision-making UI itself stays on the dashboard.
+        </p>
+        <p style="color:var(--text-muted);font-size:13px;line-height:1.7;">
+          Tap the tabs at the bottom of the phone: <b style="color:var(--text-primary);">Home</b>,
+          <b style="color:var(--text-primary);">Expenses</b>, <b style="color:var(--text-primary);">Insights</b>,
+          <b style="color:var(--text-primary);">Settings</b>.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ PARTNER PORTAL VIEW ============ -->
+  <div class="view" id="view-portal">
+    <div class="portal-wrap">
+      <div class="portal-head">
+        <div>
+          <h2>Leads Inbox — Om Auto Care, HSR Layout</h2>
+          <p>Accept a lead, update its status as you work it. Commission posts automatically on Converted.</p>
+        </div>
+        <div class="portal-stats" id="portalStats"></div>
+      </div>
+      <table class="lead-table">
+        <thead>
+          <tr><th>Customer</th><th>Vehicle</th><th>Category</th><th>Received</th><th>Status</th><th></th></tr>
+        </thead>
+        <tbody id="leadTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="footer-note">Prototype only — all data shown is illustrative and simulated client-side, nothing is sent to a real backend or partner.</div>
+</div>
+
+<script>
+/* ===================== PERSISTENT STORAGE LAYER ===================== */
+/* Everything below reads/writes through window.storage — the artifact's
+   real per-user persistent store. Data survives closing and reopening
+   this app. It is NOT a live multi-device sync (no websockets) — it's
+   read on load and written immediately after every change, which is as
+   "real-time" as a static, backend-less prototype can honestly get. */
+
+const STORAGE_KEY = 'car-app-state';
+
+function daysAgo(n){
+  const d = new Date();
+  d.setDate(d.getDate() - n);
+  return d.toISOString().slice(0,10);
+}
+
+function defaultState(){
+  return {
+    vehicle: {
+      name: 'Hyundai Creta SX',
+      plate: 'KA 05 MX 1234',
+      odometer: 34210,
+      odometerMonthStart: 33500  // snapshot used to compute "distance driven this month"
+    },
+    trustScore: 88,
+    expenses: [
+      { id: 'e1', cat: 'Fuel', icon: '⛽', amount: 1850, date: daysAgo(2),  odometer: 34180, verified: false },
+      { id: 'e2', cat: 'Car wash', icon: '🧽', amount: 250, date: daysAgo(6), odometer: null, verified: false },
+      { id: 'e3', cat: 'Service', icon: '🔧', amount: 2100, date: daysAgo(10), odometer: 33920, verified: true, partner: 'Om Auto Care' },
+      { id: 'e4', cat: 'Fuel', icon: '⛽', amount: 1780, date: daysAgo(18), odometer: 33680, verified: false },
+    ],
+    passportEvents: [
+      { title: 'Service completed — Om Auto Care', date: daysAgo(10), verified: true, meta: '33,920 km' },
+      { title: 'Insurance renewed — Bajaj Allianz', date: daysAgo(48), verified: true, meta: 'no lapse' },
+      { title: 'Car wash — self-logged', date: daysAgo(6), verified: false, meta: '' },
+      { title: 'Battery replaced — Amaron Care Point', date: daysAgo(95), verified: true, meta: 'OEM part' },
+    ],
+    leads: [
+      {id:1, name:'Aditi R.', vehicle:'Creta SX · KA05 MX 1234', cat:'Service', icon:'🔧', bg:'#0a3b37', time:'8 min ago', status:'new', commission:150},
+      {id:2, name:'Rohan K.', vehicle:'i20 Sportz · KA02 JT 9081', cat:'Battery', icon:'🔋', bg:'#3a2c10', time:'34 min ago', status:'contacted', commission:120},
+      {id:3, name:'Meera S.', vehicle:'Verna SX · KA51 AB 4432', cat:'Service', icon:'🔧', bg:'#0a3b37', time:'1 hr ago', status:'quoted', commission:150},
+      {id:4, name:'Farhan A.', vehicle:'Venue S · KA03 QD 2210', cat:'Tyres', icon:'🛞', bg:'#132038', time:'2 hrs ago', status:'converted', commission:120},
+      {id:5, name:'Priya N.', vehicle:'Creta EX · KA41 CV 7765', cat:'Service', icon:'🔧', bg:'#0a3b37', time:'Yesterday', status:'lost', commission:0},
+    ],
+    theme: 'dark',
+    nextLeadId: 6,
+    nextExpenseId: 5
+  };
+}
+
+let STATE = null; // populated by loadState() before first render
+
+async function loadState(){
+  try{
+    const res = await window.storage.get(STORAGE_KEY, false);
+    if(res && res.value){
+      const parsed = JSON.parse(res.value);
+      setSyncStatus('saved', 'Loaded');
+      return parsed;
+    }
+  } catch(e){
+    // key doesn't exist yet on first-ever run — that's expected, not an error
+    console.log('No saved state yet — starting fresh.', e);
+  }
+  return defaultState();
+}
+
+async function saveState(){
+  setSyncStatus('saving', 'Saving…');
+  try{
+    const res = await window.storage.set(STORAGE_KEY, JSON.stringify(STATE), false);
+    if(res){
+      setSyncStatus('saved', 'Saved');
+    } else {
+      setSyncStatus('error', 'Save failed');
+    }
+  } catch(e){
+    console.error('Storage write failed:', e);
+    setSyncStatus('error', 'Offline');
+  }
+}
+
+function setSyncStatus(kind, label){
+  const dot = document.getElementById('syncDot');
+  const lbl = document.getElementById('syncLabel');
+  if(!dot || !lbl) return;
+  dot.className = 'sync-dot ' + kind;
+  lbl.textContent = label;
+}
+
+async function resetDemoData(){
+  if(!confirm("Reset all stored data back to the demo defaults? This clears everything you've added.")) return;
+  STATE = defaultState();
+  await saveState();
+  renderCar(); renderMobile(); renderPortal();
+}
+
+/* ===================== DERIVED / COMPUTED METRICS ===================== */
+/* This is the actual "cost per km" logic — nothing here is hardcoded.
+   monthSpend  = sum of expense.amount for expenses dated in the current calendar month
+   distance    = vehicle.odometer − vehicle.odometerMonthStart  (a snapshot recorded once)
+   costPerKm   = monthSpend ÷ distance
+   In a real backend this would be a Cloud Function reacting to new `expenses` docs;
+   here it's recomputed client-side from STATE every time it's needed. */
+function computeMetrics(){
+  const now = new Date();
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  const todayStr = now.toISOString().slice(0,10);
+  let todaySpend = 0, monthSpend = 0, yearSpend = 0;
+  const yearStart = new Date(now.getFullYear(), 0, 1);
+
+  STATE.expenses.forEach(e => {
+    const d = new Date(e.date + 'T00:00:00');
+    if(d >= monthStart) monthSpend += e.amount;
+    if(e.date === todayStr) todaySpend += e.amount;
+    if(d >= yearStart) yearSpend += e.amount;
+  });
+
+  const distance = Math.max(0, STATE.vehicle.odometer - STATE.vehicle.odometerMonthStart);
+  const costPerKm = distance > 0 ? (monthSpend / distance) : null;
+
+  return { todaySpend, monthSpend, yearSpend, distance, costPerKm };
+}
+
+function fmtRupee(n){
+  return '₹' + Math.round(n).toLocaleString('en-IN');
+}
+
+/* ===================== SHARED ALERT DATA ===================== */
+const ALERTS = [
+  {id:'ins', cat:'Insurance', urgency:'high', title:'Insurance expires in 3 days', cta:'Renew Now', commissionBase: 300,
+    partners:[
+      {name:'HDFC Ergo', priceNum:5800, rating:'★ 4.5', featured:true},
+      {name:'ICICI Lombard', priceNum:6050, rating:'★ 4.2', featured:false},
+      {name:'Bajaj Allianz', priceNum:6200, rating:'★ 4.3', featured:false},
+    ]},
+  {id:'svc', cat:'Service', urgency:'med', title:'Service due in 500 km', cta:'Book Service', commissionBase: 150,
+    partners:[
+      {name:'Om Auto Care', priceNum:2200, rating:'★ 4.6', featured:true},
+      {name:'Speedway Motors', priceNum:2450, rating:'★ 4.4', featured:false},
+      {name:'Hyundai Service — HSR', priceNum:3100, rating:'★ 4.5', featured:false},
+    ]},
+  {id:'puc', cat:'PUC', urgency:'high', title:'Pollution certificate expired', cta:'Find PUC Centre', commissionBase: 40,
+    partners:[
+      {name:'Nearest PUC — 1.2 km', priceNum:90, rating:'★ 4.0', featured:true},
+      {name:'HP Petrol Pump PUC', priceNum:100, rating:'★ 3.9', featured:false},
+      {name:'Bosch Care PUC', priceNum:120, rating:'★ 4.3', featured:false},
+    ]},
+  {id:'tyre', cat:'Tyres', urgency:'med', title:'Tyres may be due for a check', cta:'Find Tyre Partners', commissionBase: 120,
+    partners:[
+      {name:'TyrePlus HSR', priceNum:3200, rating:'★ 4.4', featured:true},
+      {name:'Bridgestone Select', priceNum:3600, rating:'★ 4.6', featured:false},
+      {name:'Local Tyre Hub', priceNum:2900, rating:'★ 4.0', featured:false},
+    ]},
+  {id:'batt', cat:'Battery', urgency:'med', title:'Battery may need checking', cta:'Check Battery', commissionBase: 120,
+    partners:[
+      {name:'Amaron Care Point', priceNum:4800, rating:'★ 4.5', featured:true},
+      {name:'Exide Xpress', priceNum:5100, rating:'★ 4.3', featured:false},
+      {name:'Om Auto Care', priceNum:4950, rating:'★ 4.6', featured:false},
+    ]},
+];
+const CAT_ICON = {Insurance:'🛡️', Service:'🔧', PUC:'📄', Tyres:'🛞', Battery:'🔋'};
+const CAT_BG = {Insurance:'#132038', Service:'#0a3b37', PUC:'#3a2c10', Tyres:'#132038', Battery:'#3a2c10'};
+
+let carAlertIndex = 0;
+let carScreenState = 'home'; // home | detail | confirm
+let carSelectedPartner = null;
+
+/* ===================== IN-CAR RENDER ===================== */
+function currentAlert(){ return ALERTS[carAlertIndex]; }
+
+function renderCar(){
+  const el = document.getElementById('carScreen');
+  if(!STATE){ el.innerHTML = '<div class="confirm-wrap" style="flex:1;"><div class="confirm-sub">Loading saved data…</div></div>'; return; }
+  const a = currentAlert();
+  const m = computeMetrics();
+
+  if(carScreenState === 'home'){
+    el.innerHTML = `
+      <div class="car-topbar">
+        <div class="veh-id">
+          <span class="icon">🚗</span>
+          <span class="name">${STATE.vehicle.name.replace(' SX','')}</span>
+          <span class="plate">${STATE.vehicle.plate}</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:14px;">
+          <div class="score-badge" onclick="setDevice('mobile'); setMobileTab('passport');" title="Vehicle Trust Score — tap for full passport">
+            <div class="ring" style="--pct:${STATE.trustScore}%"></div>
+            <div>
+              <div class="num">${STATE.trustScore}</div>
+              <div class="lbl">Trust Score</div>
+            </div>
+          </div>
+          <div class="car-clock">PARKED · 9:41 AM</div>
+        </div>
+      </div>
+      <div class="metrics-row">
+        <div class="metric"><div class="label">Today</div><div class="value">${fmtRupee(m.todaySpend)}</div></div>
+        <div class="metric"><div class="label">This Month</div><div class="value">${fmtRupee(m.monthSpend)}</div></div>
+        <div class="metric"><div class="label">Cost / km</div><div class="value teal">${m.costPerKm !== null ? '₹' + m.costPerKm.toFixed(2) : '—'}</div></div>
+      </div>
+      <div class="car-body">
+        <div class="alert-card urgency-${a.urgency === 'high' ? 'high' : 'med'}">
+          <div class="more-pill" onclick="cycleAlert()">+${ALERTS.length-1} more</div>
+          <div class="alert-top">
+            <span class="pill ${a.urgency}">${a.urgency === 'high' ? 'Urgent' : 'Due soon'}</span>
+            <span class="alert-cat">${a.cat}</span>
+          </div>
+          <div class="alert-status">${a.title}</div>
+          <button class="btn-primary" onclick="goDetail()">${a.cta}</button>
+        </div>
+      </div>
+      <div class="voice-bar">
+        <div class="mic-btn" id="micBtn" onclick="startVoiceFlow()">🎙</div>
+        <div>
+          <div class="voice-hint"><b>Try:</b> "${a.cta}" · "Show more" · "Show offers"</div>
+          <div class="voice-transcript" id="voiceTranscript"></div>
+        </div>
+      </div>
+    `;
+  }
+
+  if(carScreenState === 'detail'){
+    el.innerHTML = `
+      <div class="detail-wrap">
+        <div class="detail-head">
+          <button class="back-btn" onclick="goHome()">← Back</button>
+          <div class="detail-title">${a.cat === 'Insurance' ? 'Insurance Renewal' : a.cat === 'Service' ? 'Service Booking' : a.cat + ' — Partners'}</div>
+        </div>
+        <div class="detail-sub">${a.title} · choose a partner below</div>
+        <div class="partner-row">
+          ${a.partners.map((p,i) => `
+            <div class="partner-card ${p.featured ? 'featured':''}" onclick="selectPartner(${i})">
+              <div>
+                <div class="p-name">${p.name}</div>
+                <div class="p-price">₹${p.priceNum.toLocaleString('en-IN')}</div>
+                <div class="p-rating">${p.rating}</div>
+              </div>
+              <div class="p-select">Select</div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+      <div class="voice-bar">
+        <div class="mic-btn" onclick="startVoiceSelect()">🎙</div>
+        <div>
+          <div class="voice-hint"><b>Try:</b> "Select ${a.partners[0].name}"</div>
+          <div class="voice-transcript" id="voiceTranscript"></div>
+        </div>
+      </div>
+    `;
+  }
+
+  if(carScreenState === 'confirm'){
+    el.innerHTML = `
+      <div class="confirm-wrap" style="flex:1;">
+        <div class="confirm-check">✓</div>
+        <div class="confirm-title">Request Sent</div>
+        <div class="confirm-sub">${carSelectedPartner ? carSelectedPartner.name + ' will contact you within 30 minutes.' : ''}</div>
+        <div class="confirm-sub" style="color:#7ff5e6;font-size:11.5px;margin-top:6px;">✓ Logged to expenses · Passport updated · Trust Score +2</div>
+      </div>
+    `;
+    setTimeout(()=>{ if(carScreenState==='confirm'){ resolveAlertAndGoHome(); } }, 2800);
+  }
+
+  renderCarControls();
+}
+
+function renderCarControls(){
+  const el = document.getElementById('carControls');
+  if(!STATE) { el.innerHTML=''; return; }
+  el.innerHTML = `
+    <button class="ctrl-btn" onclick="cycleAlert()">Cycle alert (${currentAlert().cat})</button>
+    <button class="ctrl-btn" onclick="goHome()">Reset to Home</button>
+  `;
+}
+
+function goDetail(){ carScreenState = 'detail'; renderCar(); }
+function goHome(){ carScreenState = 'home'; carSelectedPartner = null; renderCar(); }
+
+async function selectPartner(i){
+  const a = currentAlert();
+  const partner = a.partners[i];
+  carSelectedPartner = partner;
+  carScreenState = 'confirm';
+  renderCar();
+  await recordBooking(a, partner);
+}
+
+/* This is the write path: an in-car booking becomes a real, persisted
+   expense + a verified passport event + a new lead in the Partner Portal
+   + a Trust Score bump — all through the same STATE object, saved once. */
+async function recordBooking(alert, partner){
+  const today = new Date().toISOString().slice(0,10);
+
+  STATE.expenses.unshift({
+    id: 'e' + STATE.nextExpenseId++,
+    cat: alert.cat,
+    icon: CAT_ICON[alert.cat] || '🧾',
+    amount: partner.priceNum,
+    date: today,
+    odometer: STATE.vehicle.odometer,
+    verified: true,
+    partner: partner.name
+  });
+
+  STATE.passportEvents.unshift({
+    title: `${alert.cat} — ${partner.name}`,
+    date: today,
+    verified: true,
+    meta: `${STATE.vehicle.odometer.toLocaleString('en-IN')} km`
+  });
+
+  STATE.trustScore = Math.min(99, STATE.trustScore + 2);
+
+  STATE.leads.unshift({
+    id: STATE.nextLeadId++,
+    name: 'You (this device)',
+    vehicle: `${STATE.vehicle.name} · ${STATE.vehicle.plate}`,
+    cat: alert.cat,
+    icon: CAT_ICON[alert.cat] || '🧾',
+    bg: CAT_BG[alert.cat] || '#1B212B',
+    time: 'Just now',
+    status: 'new',
+    commission: alert.commissionBase
+  });
+
+  await saveState();
+}
+
+async function resolveAlertAndGoHome(){
+  ALERTS.push(ALERTS.splice(carAlertIndex,1)[0]);
+  carAlertIndex = 0;
+  carScreenState = 'home';
+  carSelectedPartner = null;
+  renderCar();
+  renderMobile();
+  renderPortal();
+}
+function cycleAlert(){
+  carAlertIndex = (carAlertIndex + 1) % ALERTS.length;
+  carScreenState = 'home';
+  renderCar();
+}
+
+function typeTranscript(text, cb){
+  const elId = 'voiceTranscript';
+  let i = 0;
+  const timer = setInterval(()=>{
+    const node = document.getElementById(elId);
+    if(!node){ clearInterval(timer); return; }
+    node.textContent = '"' + text.slice(0, i+1) + '"';
+    i++;
+    if(i >= text.length){ clearInterval(timer); if(cb) setTimeout(cb, 500); }
+  }, 38);
+}
+
+function startVoiceFlow(){
+  const mic = document.getElementById('micBtn');
+  if(mic) mic.classList.add('listening');
+  const a = currentAlert();
+  typeTranscript(a.cta, ()=>{
+    if(mic) mic.classList.remove('listening');
+    goDetail();
+  });
+}
+function startVoiceSelect(){
+  const a = currentAlert();
+  typeTranscript('Select ' + a.partners[0].name, ()=>{
+    selectPartner(0);
+  });
+}
+
+/* ===================== MOBILE RENDER ===================== */
+const MOBILE_TABS = [
+  {id:'home', ic:'🏠', label:'Home'},
+  {id:'expenses', ic:'🧾', label:'Expenses'},
+  {id:'passport', ic:'🛡️', label:'Passport'},
+  {id:'insights', ic:'📈', label:'Insights'},
+  {id:'settings', ic:'⚙️', label:'Settings'},
+];
+let mobileTab = 'home';
+let showExpenseForm = false;
+
+function renderMobileTabs(){
+  const el = document.getElementById('phoneTabs');
+  el.innerHTML = MOBILE_TABS.map(t => `
+    <button class="tab-btn ${mobileTab===t.id?'active':''}" onclick="setMobileTab('${t.id}')">
+      <span class="ic">${t.ic}</span>${t.label}
+    </button>
+  `).join('');
+}
+function setMobileTab(id){ mobileTab = id; renderMobile(); }
+
+function renderMobile(){
+  const el = document.getElementById('phoneContent');
+  if(!STATE){ el.innerHTML = '<div class="empty-note" style="padding-top:60px;">Loading saved data…</div>'; return; }
+  const m = computeMetrics();
+
+  if(mobileTab === 'home'){
+    el.innerHTML = `
+      <div class="m-h1">Good morning 👋</div>
+      <div class="m-sub">Here's where things stand today</div>
+      <div class="m-vehicle-hero">
+        <div class="emoji">🚗</div>
+        <div>
+          <div class="name">${STATE.vehicle.name}</div>
+          <div class="plate">${STATE.vehicle.plate} · ${STATE.vehicle.odometer.toLocaleString('en-IN')} km</div>
+        </div>
+      </div>
+      <div class="m-stat-grid">
+        <div class="m-stat"><div class="v">${fmtRupee(m.monthSpend)}</div><div class="l">This Month</div></div>
+        <div class="m-stat"><div class="v">${m.costPerKm !== null ? '₹'+m.costPerKm.toFixed(2) : '—'}</div><div class="l">Cost / km</div></div>
+        <div class="m-stat"><div class="v">${fmtRupee(m.yearSpend)}</div><div class="l">This Year</div></div>
+      </div>
+      <div class="m-section-label">Active alerts</div>
+      <div class="m-card">
+        ${ALERTS.slice(0,4).map(a => `
+          <div class="m-alert-item">
+            <div class="m-dot ${a.urgency}"></div>
+            <div class="txt">
+              <div class="t1">${a.title}</div>
+              <div class="t2">${a.cat}</div>
+            </div>
+            <div class="m-chev">›</div>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  }
+
+  if(mobileTab === 'expenses'){
+    el.innerHTML = `
+      <div class="m-h1">Expenses</div>
+      <div class="m-sub">Logged automatically by partners, or added by hand</div>
+      <button class="form-toggle-btn" onclick="toggleExpenseForm()">${showExpenseForm ? '− Close form' : '+ Add Expense'}</button>
+      ${showExpenseForm ? `
+        <div class="entry-form">
+          <div class="form-row">
+            <label>Category</label>
+            <select id="fCat">
+              <option>Fuel</option><option>Service</option><option>Insurance</option>
+              <option>Tyres</option><option>Battery</option><option>Other</option>
+            </select>
+          </div>
+          <div class="form-row">
+            <label>Amount (₹)</label>
+            <input type="number" id="fAmt" placeholder="e.g. 850" min="0">
+          </div>
+          <div class="form-row">
+            <label>Date</label>
+            <input type="date" id="fDate" value="${new Date().toISOString().slice(0,10)}">
+          </div>
+          <div class="form-row">
+            <label>Odometer (optional)</label>
+            <input type="number" id="fOdo" placeholder="e.g. 34300" min="0">
+          </div>
+          <button class="form-submit" onclick="addExpenseManual()">Save Expense</button>
+        </div>
+      ` : ''}
+      <div class="m-card">
+        ${STATE.expenses.length === 0 ? '<div class="empty-note">No expenses logged yet.</div>' : STATE.expenses.map(e => `
+          <div class="m-expense-item">
+            <div class="cat">
+              <div class="m-badge" style="background:${CAT_BG[e.cat] || '#1B212B'}">${e.icon}</div>
+              <div>
+                <div style="font-weight:600;">${e.cat}${e.partner ? ' — ' + e.partner : ''}</div>
+                <div style="color:var(--text-faint);font-size:11px;">${e.date}${e.verified ? ' · <span style=\"color:var(--teal);\">verified</span>' : ''}</div>
+              </div>
+            </div>
+            <div class="amt">${fmtRupee(e.amount)}</div>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  }
+
+  if(mobileTab === 'passport'){
+    el.innerHTML = `
+      <div class="passport-hero">
+        <div class="passport-ring" style="background:conic-gradient(#00E0C6 0% ${STATE.trustScore}%, #232a35 ${STATE.trustScore}% 100%);">
+          <div class="inner"><div class="n">${STATE.trustScore}</div><div class="s">Trust Score</div></div>
+        </div>
+        <div class="passport-tag">Top 15% in HSR Layout</div>
+      </div>
+      <div class="m-section-label" style="margin-top:0;">Score breakdown</div>
+      <div class="m-card">
+        <div class="score-breakdown-row"><div class="lbl">Maintenance</div><div class="track"><div class="fill" style="width:96%"></div></div><div class="pct">96%</div></div>
+        <div class="score-breakdown-row"><div class="lbl">Insurance continuity</div><div class="track"><div class="fill" style="width:100%"></div></div><div class="pct">100%</div></div>
+        <div class="score-breakdown-row"><div class="lbl">Verified vs. self-logged</div><div class="track"><div class="fill" style="width:82%"></div></div><div class="pct">82%</div></div>
+        <div class="score-breakdown-row"><div class="lbl">Documentation</div><div class="track"><div class="fill" style="width:90%"></div></div><div class="pct">90%</div></div>
+        <div class="score-breakdown-row"><div class="lbl">Claims history</div><div class="track"><div class="fill" style="width:100%"></div></div><div class="pct">100%</div></div>
+      </div>
+      <div class="m-section-label">Verified history</div>
+      <div class="m-card">
+        ${STATE.passportEvents.map(p => `
+          <div class="timeline-item ${p.verified ? '' : 'unverified'}">
+            <div class="timeline-check">${p.verified ? '✓' : '–'}</div>
+            <div class="txt">
+              <div class="t1">${p.title}</div>
+              <div class="t2">${p.date}${p.meta ? ' · ' + p.meta : ''} <span class="${p.verified ? 'verified-tag' : 'unverified-tag'}">${p.verified ? '· Partner verified' : '· Not counted in score'}</span></div>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+      <button class="share-btn" onclick="alert('In the real app: generates a read-only link/QR — vehicle history and score only, no personal or contact details.')">Share Passport with a Dealer</button>
+    `;
+  }
+
+  if(mobileTab === 'insights'){
+    const total = m.monthSpend || 1;
+    const byCategory = {};
+    STATE.expenses.forEach(e=>{
+      const d = new Date(e.date + 'T00:00:00');
+      const now = new Date();
+      if(d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()){
+        byCategory[e.cat] = (byCategory[e.cat] || 0) + e.amount;
+      }
+    });
+    const rows = Object.entries(byCategory).sort((a,b)=>b[1]-a[1]);
+    el.innerHTML = `
+      <div class="m-h1">Insights</div>
+      <div class="m-sub">Where this month's ${fmtRupee(m.monthSpend)} went</div>
+      <div class="m-card">
+        ${rows.length === 0 ? '<div class="empty-note">No spend logged this month yet.</div>' : rows.map(([cat,amt]) => `
+          <div class="m-insight-bar-row"><div class="lbl">${cat}</div><div class="m-insight-bar-track"><div class="m-insight-bar-fill" style="width:${Math.round(amt/total*100)}%"></div></div><div class="amt">${fmtRupee(amt)}</div></div>
+        `).join('')}
+      </div>
+      <div class="m-section-label">This month, calculated live</div>
+      <div class="m-card">
+        <div style="font-size:12.5px;line-height:1.8;color:var(--text-muted);">
+          Distance driven: <b style="color:var(--text-primary);">${m.distance.toLocaleString('en-IN')} km</b><br>
+          Spend this month: <b style="color:var(--text-primary);">${fmtRupee(m.monthSpend)}</b><br>
+          Cost per km = ${fmtRupee(m.monthSpend)} ÷ ${m.distance.toLocaleString('en-IN')} km =
+          <b style="color:var(--teal);">${m.costPerKm !== null ? '₹'+m.costPerKm.toFixed(2) : 'not enough data yet'}</b>
+        </div>
+      </div>
+    `;
+  }
+
+  if(mobileTab === 'settings'){
+    el.innerHTML = `
+      <div class="m-h1">Settings</div>
+      <div class="m-sub">Alerts, vehicle data & storage</div>
+      <div class="m-section-label" style="margin-top:0;">Notifications</div>
+      <div class="m-card" style="padding:4px 16px;">
+        <div class="toggle-row"><span>In-car alerts</span><div class="switch on" onclick="this.classList.toggle('on')"></div></div>
+        <div class="toggle-row"><span>Push notifications</span><div class="switch on" onclick="this.classList.toggle('on')"></div></div>
+        <div class="toggle-row"><span>Daily digest</span><div class="switch" onclick="this.classList.toggle('on')"></div></div>
+        <div class="toggle-row"><span>Partner offers</span><div class="switch on" onclick="this.classList.toggle('on')"></div></div>
+      </div>
+      <div class="m-section-label">Vehicle — odometer reading</div>
+      <div class="m-card">
+        <div class="odometer-edit-row">
+          <input type="number" id="fOdoUpdate" placeholder="Current odometer" value="${STATE.vehicle.odometer}">
+          <button onclick="updateOdometer()">Update</button>
+        </div>
+        <div style="font-size:11px;color:var(--text-faint);padding:0 2px 6px;">Used to compute cost/km live on the Home and In-Car screens.</div>
+      </div>
+      <div class="m-section-label">Vehicle — other</div>
+      <div class="m-card" style="padding:4px 16px;">
+        <div class="toggle-row"><span>Insurance policy</span><span style="color:var(--text-faint);">Bajaj Allianz</span></div>
+        <div class="toggle-row"><span>Subscription</span><span style="color:var(--teal);">Free</span></div>
+      </div>
+      <div class="m-section-label">Storage</div>
+      <div class="m-card">
+        <div style="font-size:11.5px;color:var(--text-muted);line-height:1.6;margin-bottom:2px;">
+          Data is saved to this device's app storage after every change — expenses,
+          bookings, odometer updates, and lead status. Closing and reopening the app keeps it.
+        </div>
+        <button class="reset-btn" onclick="resetDemoData()">Reset to Demo Data</button>
+      </div>
+    `;
+  }
+  renderMobileTabs();
+}
+
+function toggleExpenseForm(){
+  showExpenseForm = !showExpenseForm;
+  renderMobile();
+}
+
+async function addExpenseManual(){
+  const cat = document.getElementById('fCat').value;
+  const amt = parseFloat(document.getElementById('fAmt').value);
+  const date = document.getElementById('fDate').value || new Date().toISOString().slice(0,10);
+  const odo = document.getElementById('fOdo').value ? parseInt(document.getElementById('fOdo').value, 10) : null;
+
+  if(!amt || amt <= 0){
+    alert('Enter a valid amount.');
+    return;
+  }
+
+  STATE.expenses.unshift({
+    id: 'e' + STATE.nextExpenseId++,
+    cat, icon: CAT_ICON[cat] || '🧾',
+    amount: amt, date, odometer: odo, verified: false
+  });
+
+  if(odo && odo > STATE.vehicle.odometer){
+    STATE.vehicle.odometer = odo;
+  }
+
+  STATE.passportEvents.unshift({ title: `${cat} — self-logged`, date, verified: false, meta: '' });
+
+  showExpenseForm = false;
+  await saveState();
+  renderMobile();
+  renderCar();
+}
+
+async function updateOdometer(){
+  const val = parseInt(document.getElementById('fOdoUpdate').value, 10);
+  if(!val || val < 0){ alert('Enter a valid odometer reading.'); return; }
+  STATE.vehicle.odometer = val;
+  await saveState();
+  renderMobile();
+  renderCar();
+}
+
+/* ===================== PARTNER PORTAL RENDER ===================== */
+const STATUS_FLOW = ['new','contacted','quoted','converted'];
+const STATUS_LABEL = {new:'New', contacted:'Contacted', quoted:'Quoted', converted:'Converted', lost:'Lost'};
+
+async function advanceStatus(id){
+  const lead = STATE.leads.find(l => l.id === id);
+  const idx = STATUS_FLOW.indexOf(lead.status);
+  if(idx >= 0 && idx < STATUS_FLOW.length - 1){
+    lead.status = STATUS_FLOW[idx+1];
+  }
+  await saveState();
+  renderPortal();
+}
+
+function renderPortal(){
+  if(!STATE){
+    document.getElementById('leadTableBody').innerHTML = `<tr><td colspan="6" class="empty-note">Loading saved data…</td></tr>`;
+    return;
+  }
+  const converted = STATE.leads.filter(l=>l.status==='converted');
+  const totalCommission = converted.reduce((s,l)=>s+l.commission,0);
+  document.getElementById('portalStats').innerHTML = `
+    <div class="portal-stat"><div class="v">${STATE.leads.length}</div><div class="l">Leads (wk)</div></div>
+    <div class="portal-stat"><div class="v">${Math.round(converted.length/STATE.leads.length*100)}%</div><div class="l">Converted</div></div>
+    <div class="portal-stat"><div class="v">${fmtRupee(totalCommission)}</div><div class="l">Owed</div></div>
+  `;
+  document.getElementById('leadTableBody').innerHTML = STATE.leads.map(l => {
+    const idx = STATUS_FLOW.indexOf(l.status);
+    const isLost = l.status === 'lost';
+    const nextLabel = !isLost && idx < STATUS_FLOW.length-1 ? 'Mark ' + STATUS_LABEL[STATUS_FLOW[idx+1]] : null;
+    return `
+      <tr>
+        <td>${l.name}</td>
+        <td style="color:var(--text-muted);">${l.vehicle}</td>
+        <td>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <div class="lead-cat-badge" style="background:${l.bg}">${l.icon}</div>
+            ${l.cat}
+          </div>
+        </td>
+        <td style="color:var(--text-faint);">${l.time}</td>
+        <td><span class="status-pill status-${l.status}">${STATUS_LABEL[l.status]}</span></td>
+        <td>
+          ${nextLabel ? `<button class="advance-btn" onclick="advanceStatus(${l.id})">${nextLabel}</button>` : `<button class="advance-btn" disabled>Closed</button>`}
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+/* ===================== THEME TOGGLE ===================== */
+function toggleTheme(){
+  const root = document.documentElement;
+  const isLight = root.getAttribute('data-theme') === 'light';
+  const next = isLight ? 'dark' : 'light';
+  root.setAttribute('data-theme', next);
+  document.getElementById('themeLabel').textContent = next === 'light' ? 'Light' : 'Dark';
+  document.getElementById('themeThumb').textContent = next === 'light' ? '☀️' : '🌙';
+}
+
+/* ===================== DEVICE SWITCHER ===================== */
+function setDevice(view){
+  document.querySelectorAll('.device-switch button').forEach(b=>{
+    b.classList.toggle('active', b.dataset.view === view);
+  });
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('view-' + view).classList.add('active');
+}
+document.querySelectorAll('.device-switch button').forEach(btn => {
+  btn.addEventListener('click', () => setDevice(btn.dataset.view));
+});
+
+/* ===================== INIT ===================== */
+async function init(){
+  setSyncStatus('saving', 'Loading…');
+  STATE = await loadState();
+  renderCar();
+  renderMobile();
+  renderPortal();
+}
+init();
+</script>
+</body>
+</html>

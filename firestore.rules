@@ -1,0 +1,101 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(ownerId) {
+      return isSignedIn() && request.auth.uid == ownerId;
+    }
+
+    function isPartnerStaffFor(partnerId) {
+      return isSignedIn() &&
+        exists(/databases/$(database)/documents/partner_users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/partner_users/$(request.auth.uid)).data.partnerId == partnerId;
+    }
+
+    // ---------------- users ----------------
+    match /users/{userId} {
+      allow read, update: if isOwner(userId);
+      allow create: if isSignedIn() && request.auth.uid == userId;
+      allow delete: if false;
+    }
+
+    // ---------------- vehicles ----------------
+    match /vehicles/{vehicleId} {
+      allow read: if isOwner(resource.data.ownerId);
+      allow create: if isSignedIn() && request.resource.data.ownerId == request.auth.uid;
+      // Owners can edit their own vehicle fields, but never write "summary" or
+      // "trustScore" directly — those are Cloud-Function-only derived fields.
+      allow update: if isOwner(resource.data.ownerId) &&
+        !('summary' in request.resource.data.diff(resource.data).affectedKeys()) &&
+        !('trustScore' in request.resource.data.diff(resource.data).affectedKeys());
+      allow delete: if isOwner(resource.data.ownerId);
+    }
+
+    // ---------------- expenses ----------------
+    match /expenses/{expenseId} {
+      allow read: if isOwner(resource.data.ownerId);
+      // Users can log their own manual expenses, but can never mark one
+      // "verified" or "partner_confirmed" themselves — only Cloud Functions
+      // (running with admin privileges) create those.
+      allow create: if isOwner(request.resource.data.ownerId) &&
+        request.resource.data.source == 'manual' &&
+        request.resource.data.verified == false;
+      allow update, delete: if isOwner(resource.data.ownerId) && resource.data.source == 'manual';
+    }
+
+    // ---------------- alerts ----------------
+    match /alerts/{alertId} {
+      allow read: if isSignedIn(); // tightened further via vehicleId ownership check in query layer
+      // Only status/snoozedUntil may be changed by the owner (e.g. snoozing);
+      // alerts themselves are created by the computeAlerts Cloud Function.
+      allow update: if isSignedIn() &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'snoozedUntil']);
+      allow create, delete: if false; // Cloud Functions only (admin SDK bypasses rules)
+    }
+
+    // ---------------- leads ----------------
+    match /leads/{leadId} {
+      allow read: if isSignedIn() &&
+        (resource.data.userId == request.auth.uid || isPartnerStaffFor(resource.data.partnerId));
+
+      // A user can create a lead (that's the "Renew Now" / "Book Service" tap),
+      // but only with status "new" and no commission fields set.
+      allow create: if isSignedIn() &&
+        request.resource.data.userId == request.auth.uid &&
+        request.resource.data.status == 'new' &&
+        !('commissionAmount' in request.resource.data) &&
+        !('commissionStatus' in request.resource.data);
+
+      // A partner can only move status forward along the fixed flow, and can
+      // never touch commissionAmount/commissionStatus — those are Cloud-Function-only.
+      allow update: if isPartnerStaffFor(resource.data.partnerId) &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'statusUpdatedAt', 'quotedAmount']) &&
+        (
+          (resource.data.status == 'new' && request.resource.data.status in ['contacted', 'lost']) ||
+          (resource.data.status == 'contacted' && request.resource.data.status in ['quoted', 'lost']) ||
+          (resource.data.status == 'quoted' && request.resource.data.status in ['converted', 'lost'])
+        );
+
+      allow delete: if false;
+    }
+
+    // ---------------- partners ----------------
+    match /partners/{partnerId} {
+      allow read: if true; // public — users need to browse partner options before choosing one
+      allow update: if isPartnerStaffFor(partnerId) &&
+        !('stats' in request.resource.data.diff(resource.data).affectedKeys()); // stats is Cloud-Function-only
+      allow create, delete: if false; // onboarding handled by an admin-side process
+    }
+
+    // ---------------- partner_users ----------------
+    match /partner_users/{partnerUserId} {
+      allow read: if isSignedIn() && request.auth.uid == partnerUserId;
+      allow write: if false; // provisioned by an admin-side onboarding flow only
+    }
+  }
+}
