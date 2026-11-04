@@ -1,0 +1,4 @@
+*.md
+firebase-integration.js
+firestore.rules
+firestore.indexes.json

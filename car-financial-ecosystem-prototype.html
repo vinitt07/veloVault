@@ -1928,6 +1928,23 @@
        read on load and written immediately after every change, which is as
        "real-time" as a static, backend-less prototype can honestly get. */
 
+    /* Outside the Claude artifact runtime (e.g. when hosted on Vercel)
+       window.storage doesn't exist — fall back to this browser's localStorage
+       with the same get/set shape, so data still persists per device. */
+    if (!window.storage) {
+      window.storage = {
+        async get(key) {
+          const value = localStorage.getItem(key);
+          if (value === null) throw new Error('Key not found: ' + key);
+          return { key, value };
+        },
+        async set(key, value) {
+          localStorage.setItem(key, value);
+          return { key, value };
+        }
+      };
+    }
+
     const STORAGE_KEY = 'car-app-state';
 
     function daysAgo(n) {
